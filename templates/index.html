@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Diarization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            width: 100%;
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+        .left, .right {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="file"], input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        #processing {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        #output {
+            margin-top: 20px;
+            background-color: #f4f4f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            height: calc(100% - 40px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Speech Diarization</div>
+    <div class="container">
+        <div class="left">
+            <div class="box">
+                <h2>Select an Option</h2>
+                <form id="audioForm" action="/process_audio" method="post" enctype="multipart/form-data">
+                    <label>
+                        <input type="radio" name="choice" value="1">
+                        YouTube URL
+                    </label>
+                    <label>
+                        <input type="radio" name="choice" value="2">
+                        Upload Audio File
+                    </label>
+
+                    <div id="url_input" class="hidden">
+                        <label for="url">YouTube URL:</label>
+                        <input type="text" id="url" name="url">
+                    </div>
+
+                    <div id="file_input" class="hidden">
+                        <label for="audio_file">Audio File:</label>
+                        <input type="file" id="audio_file" name="audio_file">
+                    </div>
+
+                    <input type="submit" value="Submit">
+                </form>
+                <div id="processing" class="hidden">Processing...</div>
+                <div id="processed" class="hidden">Processed</div>
+            </div>
+        </div>
+        <div class="right">
+            <div id="output" class="hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('input[name="choice"]').forEach((elem) => {
+            elem.addEventListener("change", function(event) {
+                if (event.target.value === '1') {
+                    document.getElementById("url_input").classList.remove("hidden");
+                    document.getElementById("file_input").classList.add("hidden");
+                } else if (event.target.value === '2') {
+                    document.getElementById("url_input").classList.add("hidden");
+                    document.getElementById("file_input").classList.remove("hidden");
+                }
+            });
+        });
+
+        document.getElementById("audioForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var form = event.target;
+            var formData = new FormData(form);
+
+            document.getElementById("processing").classList.remove("hidden");
+            document.getElementById("processed").classList.add("hidden");
+            document.getElementById("output").classList.add("hidden");
+
+            fetch(form.action, {
+                method: form.method,
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("processing").classList.add("hidden");
+                document.getElementById("processed").classList.remove("hidden");
+                if (data.translated_text) {
+                    document.getElementById("output").innerText = data.translated_text;
+                    document.getElementById("output").classList.remove("hidden");
+                } else if (data.error) {
+                    alert("Error: " + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred while processing the audio.");
+            });
+        });
+    </script>
+</body>
+</html>
